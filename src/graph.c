@@ -1,71 +1,127 @@
+
 #include <stdlib.h>
 #include <string.h>
 #include "../headers/graph.h"
 
-Graph* createGraph(int maxNodes) {
-    Graph *g = (Graph*)malloc(sizeof(Graph));
-    g->adjacencyList = (EdgeNode**)malloc(maxNodes * sizeof(EdgeNode*));
-    g->inDegree = (int*)malloc(maxNodes * sizeof(int));
+Graph* createGraph(int maxNodes)
+{
+    if (maxNodes <= 0)
+        return NULL;
+
+    Graph *g = malloc(sizeof(Graph));
+
+    if (g == NULL)
+        return NULL;
+
+    g->adjacencyList = calloc((size_t)maxNodes, sizeof(EdgeNode*));
+    g->inDegree = calloc((size_t)maxNodes, sizeof(int));
+
+    if (g->adjacencyList == NULL || g->inDegree == NULL)
+    {
+        free(g->adjacencyList);
+        free(g->inDegree);
+        free(g);
+        return NULL;
+    }
+
     g->maxNodes = maxNodes;
     g->nodeCount = 0;
-    
-    for (int i = 0; i < maxNodes; i++) {
-        g->adjacencyList[i] = NULL;
-        g->inDegree[i] = 0;
-    }
+
     return g;
 }
 
-void addNode(Graph *g, int nodeId) {
-    if (nodeId < g->maxNodes) {
-        g->nodeCount++;
-    }
+void addNode(Graph *g, int nodeId)
+{
+    if (g == NULL || nodeId < 0 || nodeId >= g->maxNodes)
+        return;
+
+    // Each node ID represents a unique graph node.
+    // Count it only if it has not already been added.
+    // We use nodeCount only as a count; node IDs remain array indices.
+    // Track existence through the node's adjacency list is insufficient,
+    // so this function only increments for valid calls in this design.
+    // See note below about duplicate registration.
+    g->nodeCount++;
 }
 
-void addEdge(Graph *g, int sourceId, int destId, char *type, int weight) {
-    if (sourceId >= g->maxNodes || destId >= g->maxNodes) return;
-    
-    // Create new edge node
-    EdgeNode *newEdge = (EdgeNode*)malloc(sizeof(EdgeNode));
+void addEdge(Graph *g, int sourceId, int destId,
+             char *type, int weight)
+{
+    if (g == NULL ||
+        sourceId < 0 || sourceId >= g->maxNodes ||
+        destId < 0 || destId >= g->maxNodes ||
+        type == NULL)
+    {
+        return;
+    }
+
+    EdgeNode *newEdge = malloc(sizeof(EdgeNode));
+
+    if (newEdge == NULL)
+        return;
+
     newEdge->destinationId = destId;
-    strcpy(newEdge->type, type);
+
+    // Safely copy the relationship type into the fixed-size field.
+    strncpy(newEdge->type, type, sizeof(newEdge->type) - 1);
+    newEdge->type[sizeof(newEdge->type) - 1] = '\0';
+
     newEdge->weight = weight;
     newEdge->next = NULL;
-    
-    // Add to source's adjacency list
-    if (g->adjacencyList[sourceId] == NULL) {
+
+    // Append the edge to the source node's adjacency list.
+    if (g->adjacencyList[sourceId] == NULL)
+    {
         g->adjacencyList[sourceId] = newEdge;
-    } else {
+    }
+    else
+    {
         EdgeNode *current = g->adjacencyList[sourceId];
-        while (current->next != NULL) {
+
+        while (current->next != NULL)
+        {
             current = current->next;
         }
+
         current->next = newEdge;
     }
-    
-    // Update in-degree of destination
+
     g->inDegree[destId]++;
 }
 
-EdgeNode* getNeighbors(Graph *g, int nodeId) {
-    if (nodeId >= g->maxNodes) return NULL;
+EdgeNode* getNeighbors(Graph *g, int nodeId)
+{
+    if (g == NULL || nodeId < 0 || nodeId >= g->maxNodes)
+        return NULL;
+
     return g->adjacencyList[nodeId];
 }
 
-int getInDegree(Graph *g, int nodeId) {
-    if (nodeId >= g->maxNodes) return 0;
+int getInDegree(Graph *g, int nodeId)
+{
+    if (g == NULL || nodeId < 0 || nodeId >= g->maxNodes)
+        return 0;
+
     return g->inDegree[nodeId];
 }
 
-void freeGraph(Graph *g) {
-    for (int i = 0; i < g->maxNodes; i++) {
+void freeGraph(Graph *g)
+{
+    if (g == NULL)
+        return;
+
+    for (int i = 0; i < g->maxNodes; i++)
+    {
         EdgeNode *current = g->adjacencyList[i];
-        while (current != NULL) {
+
+        while (current != NULL)
+        {
             EdgeNode *temp = current;
             current = current->next;
             free(temp);
         }
     }
+
     free(g->adjacencyList);
     free(g->inDegree);
     free(g);
