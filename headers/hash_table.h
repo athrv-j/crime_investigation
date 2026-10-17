@@ -6,7 +6,7 @@
 typedef struct PersonNode { // instead of writing struct personnode we can dorectly write personnode
     int personId;
     struct Person person;
-    struct PersonNode *next;
+    struct PersonNode *next;// hello bhai
 } PersonNode;
 
 // PersonNode will look like this
