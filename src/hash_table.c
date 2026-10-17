@@ -25,17 +25,15 @@ HashTable* createHashTable(int size){
 //        ↓
 // ht
 
-
-void insertPerson(HashTable *ht, struct Person person){
+void insertPerson(HashTable *ht, struct Person person) {
     int index = hash(person.id, ht->size);
+
     PersonNode *newNode = (PersonNode*)malloc(sizeof(PersonNode));
     newNode->personId = person.id;
-    newNode->person=person;
-
-    if(ht->table[index]==NULL){
-        ht->table[index]=newNode;
-        ht->count++;
-    }
+    newNode->person = person;
+    newNode->next = ht->table[index];   // push onto front of chain
+    ht->table[index] = newNode;
+    ht->count++;
 }
 // person
 // ┌──────────────────────┐
@@ -53,19 +51,41 @@ void insertPerson(HashTable *ht, struct Person person){
 
 
 struct Person* searchPerson(HashTable* ht, int personId){
+    if(ht==NULL)
+        return NULL;
     int index= hash(personId,ht->size);
-    if(ht->table[index]!=NULL && ht->table[index]->personId == personId){
-        return &(ht->table[index]->person);
+    PersonNode* current= ht->table[index];
+
+    while(current!=NULL){
+        if(current->personId==personId){
+            return &(current->person);
+        }
+        current=current->next;
     }
     return NULL;
 }
 
 void deletePerson(HashTable* ht, int personId){
+    if(ht==NULL)
+        return 0;
     int index=hash(personId,ht->size);
-    if(ht->table[index]->personId == personId && ht->table[index]!=NULL){
-        free(ht->table[index]);
-        ht->table[index]=NULL;
-        ht->count--;
+    PersonNode*current=ht->table[index];
+    PersonNode* previous=NULL;
+
+    while(current!=NULL){
+        if(current->personId==personId){
+            if(previous==NULL){
+                //deleting first node in bucket
+                ht->table[index]=current->next;
+            }else{
+                previous->next=current->next;
+            }
+            free(current);
+            ht->count--;
+            return 1;
+        }
+        previous=current;
+        current=current->next;
     }
 }
 
