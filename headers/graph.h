@@ -3,19 +3,25 @@
 
 #include "struct.h"
 
+
 typedef struct EdgeNode {
     int destinationId;
     char type[100];
     int weight;
+    time_t timespan;
     struct EdgeNode *next;
 } EdgeNode;
+
+
 
 typedef struct {
     EdgeNode **adjacencyList;
     int *inDegree;
+    int *nodeExists;
     int maxNodes;
     int nodeCount;
 } Graph;
+
 
 // Functions
 Graph* createGraph(int maxNodes);

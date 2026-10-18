@@ -15,38 +15,42 @@ Graph* createGraph(int maxNodes)
 
     g->adjacencyList = calloc((size_t)maxNodes, sizeof(EdgeNode*));
     g->inDegree = calloc((size_t)maxNodes, sizeof(int));
+    g->nodeExists = calloc((size_t)maxNodes, sizeof(int));
 
-    if (g->adjacencyList == NULL || g->inDegree == NULL)
-    {
-        free(g->adjacencyList);
-        free(g->inDegree);
-        free(g);
-        return NULL;
-    }
-
+if (g->adjacencyList == NULL ||
+    g->inDegree == NULL ||
+    g->nodeExists == NULL)
+{
+    free(g->adjacencyList);
+    free(g->inDegree);
+    free(g->nodeExists);
+    free(g);
+    return NULL;
+}
     g->maxNodes = maxNodes;
     g->nodeCount = 0;
 
     return g;
 }
 
+
 void addNode(Graph *g, int nodeId)
 {
     if (g == NULL || nodeId < 0 || nodeId >= g->maxNodes)
         return;
 
-    // Each node ID represents a unique graph node.
-    // Count it only if it has not already been added.
-    // We use nodeCount only as a count; node IDs remain array indices.
-    // Track existence through the node's adjacency list is insufficient,
-    // so this function only increments for valid calls in this design.
-    // See note below about duplicate registration.
-    g->nodeCount++;
+    if (g->nodeExists[nodeId] == 0)
+    {
+        g->nodeExists[nodeId] = 1;
+        g->nodeCount++;
+    }
 }
+
 
 void addEdge(Graph *g, int sourceId, int destId,
              char *type, int weight)
 {
+    
     if (g == NULL ||
         sourceId < 0 || sourceId >= g->maxNodes ||
         destId < 0 || destId >= g->maxNodes ||
@@ -55,7 +59,12 @@ void addEdge(Graph *g, int sourceId, int destId,
         return;
     }
 
+    addNode(g, sourceId);
+    addNode(g, destId);
+    
     EdgeNode *newEdge = malloc(sizeof(EdgeNode));
+    
+    newEdge->timespan = 0;
 
     if (newEdge == NULL)
         return;
@@ -120,6 +129,7 @@ void freeGraph(Graph *g)
             current = current->next;
             free(temp);
         }
+        free(g->nodeExists);
     }
 
     free(g->adjacencyList);

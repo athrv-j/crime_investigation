@@ -8,6 +8,7 @@
 #include "../headers/save_load.h"
 #include "../headers/ranking.h"
 #include "../headers/cycle.h"
+#include "../headers/case.h"
 
 #define MAX_NODES 100
 #define HASH_SIZE 100
@@ -20,25 +21,25 @@ void addPersonMenu(HashTable *ht, Graph *g)
     if (scanf("%d", &p.id) != 1)
     {
         printf("Invalid ID.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n' && !feof(stdin));
         return;
     }
 
     if (p.id < 0 || p.id >= MAX_NODES)
     {
         printf("ID must be between 0 and %d.\n", MAX_NODES - 1);
-        while (getchar() != '\n');
+        while (getchar() != '\n' && !feof(stdin));
         return;
     }
 
     if (searchPerson(ht, p.id) != NULL)
     {
         printf("Person ID already exists.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n' && !feof(stdin));
         return;
     }
 
-    getchar(); /* Consume newline */
+    getchar();
 
     printf("Enter name: ");
     if (fgets(p.name, sizeof(p.name), stdin) == NULL)
@@ -54,7 +55,7 @@ void addPersonMenu(HashTable *ht, Graph *g)
     if (scanf("%d", &p.age) != 1)
     {
         printf("Invalid age.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n' && !feof(stdin));
         return;
     }
 
@@ -84,7 +85,7 @@ void searchPersonMenu(HashTable *ht)
     if (scanf("%d", &id) != 1)
     {
         printf("Invalid ID.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n' && !feof(stdin));
         return;
     }
 
@@ -104,14 +105,11 @@ void searchPersonMenu(HashTable *ht)
 
 int main(void)
 {
-    HashTable *ht = createHashTable(HASH_SIZE);
-    Graph *g = createGraph(MAX_NODES);
+    Case *c = createCase(HASH_SIZE, MAX_NODES);
 
-    if (ht == NULL || g == NULL)
+    if (c == NULL)
     {
         printf("Failed to initialize the system.\n");
-        freeHashTable(ht);
-        freeGraph(g);
         return 1;
     }
 
@@ -136,18 +134,18 @@ int main(void)
         if (scanf("%d", &choice) != 1)
         {
             printf("Invalid input. Enter a number.\n");
-            while (getchar() != '\n');
+            while (getchar() != '\n' && !feof(stdin));
             continue;
         }
 
         switch (choice)
         {
             case 1:
-                addPersonMenu(ht, g);
+                addPersonMenu(c->people, c->graph);
                 break;
 
             case 2:
-                searchPersonMenu(ht);
+                searchPersonMenu(c->people);
                 break;
 
             case 3:
@@ -160,24 +158,24 @@ int main(void)
             case 7:
             {
                 int evidenceCount[MAX_NODES] = {0};
-                rankLeads(g, evidenceCount, MAX_NODES);
+                rankLeads(c->graph, evidenceCount, MAX_NODES);
                 break;
             }
 
             case 8:
                 printf("Cycle detected: %s\n",
-                       hasCycle(g) ? "YES" : "NO");
+                       hasCycle(c->graph) ? "YES" : "NO");
                 break;
 
             case 9:
-                if (saveCase("case.txt", ht, g))
+                if (saveCase("case.txt", c))
                     printf("Case saved successfully to case.txt.\n");
                 else
                     printf("Failed to save case.\n");
                 break;
 
             case 10:
-                if (loadCase("case.txt", ht, g))
+                if (loadCase("case.txt", c))
                     printf("Case loaded successfully from case.txt.\n");
                 else
                     printf("Failed to load case. Check the file and IDs.\n");
@@ -193,8 +191,7 @@ int main(void)
 
     } while (choice != 0);
 
-    freeHashTable(ht);
-    freeGraph(g);
+    freeCase(c);
 
     return 0;
 }

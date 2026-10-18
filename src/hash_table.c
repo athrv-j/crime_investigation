@@ -3,9 +3,16 @@
 #include <stdlib.h>
 #include "../headers/hash_table.h"
 
-int hash(int key, int size)
-{
-    return key % size;
+static int hash(int key, int size)
+{  if (size <= 0)
+        return 0;
+
+    int index = key % size;
+
+    if (index < 0)
+        index += size;
+
+    return index;
 }
 
 HashTable* createHashTable(int size)
@@ -39,7 +46,11 @@ HashTable* createHashTable(int size)
 
 void insertPerson(HashTable* ht, struct Person person)
 {
-    if (ht == NULL || ht->size <= 0)
+    if (ht == NULL || ht->size <= 0 || person.id < 0)
+        return;
+
+      /* Do not insert duplicate IDs */
+    if (searchPerson(ht, person.id) != NULL)
         return;
 
     int index = hash(person.id, ht->size);

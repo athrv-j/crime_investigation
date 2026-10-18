@@ -3,16 +3,16 @@
 #include <string.h>
 #include "../headers/save_load.h"
 
+#define HASH_SIZE 100
+#define MAX_NODES 100
+
 int main(void)
 {
-    HashTable *ht = createHashTable(100);
-    Graph *g = createGraph(100);
+    Case *c = createCase(HASH_SIZE, MAX_NODES);
 
-    if (ht == NULL || g == NULL)
+    if (c == NULL)
     {
-        printf("Failed to create data structures.\n");
-        if (ht != NULL) freeHashTable(ht);
-        if (g != NULL) freeGraph(g);
+        printf("Failed to create case.\n");
         return 1;
     }
 
@@ -26,54 +26,50 @@ int main(void)
     };
 
     for (int i = 0; i < 5; i++)
-        insertPerson(ht, people[i]);
+    {
+        insertPerson(c->people, people[i]);
+        addNode(c->graph, people[i].id);
+    }
 
     /* Add a relationship */
-    addNode(g, 1);
-    addNode(g, 2);
-    addEdge(g, 1, 2, "CONTACT", 5);
+    addEdge(c->graph, 1, 2, "CONTACT", 5);
 
     /* Save the case */
-    if (!saveCase("test_case.txt", ht, g))
+    if (!saveCase("test_case.txt", c))
     {
         printf("FAIL: Could not save case.\n");
-        freeHashTable(ht);
-        freeGraph(g);
+        freeCase(c);
         return 1;
     }
 
     printf("Save test: PASS\n");
 
-    /* Create fresh structures to load into */
-    HashTable *loadedHT = createHashTable(100);
-    Graph *loadedGraph = createGraph(100);
+    /* Create a fresh case to load into */
+    Case *loaded = createCase(HASH_SIZE, MAX_NODES);
 
-    if (loadedHT == NULL || loadedGraph == NULL)
+    if (loaded == NULL)
     {
-        printf("Failed to create loading structures.\n");
-        freeHashTable(ht);
-        freeGraph(g);
-        if (loadedHT != NULL) freeHashTable(loadedHT);
-        if (loadedGraph != NULL) freeGraph(loadedGraph);
+        printf("Failed to create loading case.\n");
+        freeCase(c);
         return 1;
     }
 
-    if (!loadCase("test_case.txt", loadedHT, loadedGraph))
+    if (!loadCase("test_case.txt", loaded))
     {
         printf("FAIL: Could not load case.\n");
-        freeHashTable(ht);
-        freeGraph(g);
-        freeHashTable(loadedHT);
-        freeGraph(loadedGraph);
+        freeCase(c);
+        freeCase(loaded);
         return 1;
     }
+
+    printf("Load test: PASS\n");
 
     /* Verify all five people */
     int passed = 1;
 
     for (int i = 0; i < 5; i++)
     {
-        struct Person *p = searchPerson(loadedHT, people[i].id);
+        struct Person *p = searchPerson(loaded->people, people[i].id);
 
         if (p == NULL || strcmp(p->name, people[i].name) != 0)
         {
@@ -84,10 +80,12 @@ int main(void)
     }
 
     if (passed)
+    {
         printf("Five-person load test: PASS\n");
+    }
 
-    /* Verify the graph edge */
-    EdgeNode *edge = getNeighbors(loadedGraph, 1);
+    /* Verify the graph relationship */
+    EdgeNode *edge = getNeighbors(loaded->graph, 1);
 
     if (edge != NULL &&
         edge->destinationId == 2 &&
@@ -102,10 +100,15 @@ int main(void)
         passed = 0;
     }
 
-    freeHashTable(ht);
-    freeGraph(g);
-    freeHashTable(loadedHT);
-    freeGraph(loadedGraph);
+    freeCase(c);
+    freeCase(loaded);
 
-    return passed ? 0 : 1;
+    if (passed)
+    {
+        printf("\nALL SAVE/LOAD TESTS PASSED.\n");
+        return 0;
+    }
+
+    printf("\nSOME SAVE/LOAD TESTS FAILED.\n");
+    return 1;
 }

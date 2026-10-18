@@ -3,4 +3,4 @@ PERSONS: 2|Aditya|witness|25|9876543211|Saw the incident
 PERSONS: 3|Priya|victim|22|9876543212|Victim record
 PERSONS: 4|Rohan|witness|30|9876543213|Nearby witness
 PERSONS: 5|Sneha|suspect|27|9876543214|Under investigation
-EDGES: 1|2|CONTACT|5
+EDGES: 1|2|CONTACT|5|0
